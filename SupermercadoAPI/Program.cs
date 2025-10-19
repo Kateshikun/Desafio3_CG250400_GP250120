@@ -6,8 +6,11 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SupermercadoAPI.Services;
 
-
 var builder = WebApplication.CreateBuilder(args);
+
+// --- JWT: LECTURA SEGURA DE LA CLAVE SECRETA ---
+// Lectura de la clave antes del bloque AddJwtBearer para evitar errores de null
+var jwtSecretKey = builder.Configuration["JwtSettings:Secret"];
 
 /* SERVICIO DE BASE DE DATOS */
 var connectionString = "Server=localhost;Database=Supermercado;Uid=root;Pwd=;"; //URL de conexión a la base de datos MySQL
@@ -25,8 +28,14 @@ builder.Services.AddDbContext<AppDbContext>(options => //Servicio para la conexi
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly); //Registrar los servicios de mapeo para convertir entre DTOs y entidades
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer(); 
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+/* SERVICIOS DE SEGURIDAD */
+// Inyección de dependencia para el servicio de manejo de contraseñas, no tiene estado por eso es singleton
+builder.Services.AddSingleton<IpasswordHelper, PasswordHelper>();
+// Inyección de dependencia para el servicio de generación de tokens
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 /* AUTENTICACIÓN Y AUTORIZACIÓN CON JWT */
 builder.Services.AddAuthentication(options =>
@@ -34,8 +43,8 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; //Validar tokens JWT para autenticar solicitudes entrantes (accion predeterminada)
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; //Lo que pasaria si la autenticación falla: 401 error (accion predeterminada)
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme; //Esquema predeterminado para todas las operaciones de autenticación (accion predeterminada)
-}).
-AddJwtBearer(options =>
+})
+.AddJwtBearer(options =>
 {
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
@@ -43,14 +52,14 @@ AddJwtBearer(options =>
     {
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidAudience = builder.Configuration["JWT:ValidAudience"],
-        ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"])) //Clave secreta para firmar el token que se codifica en UTF8 por seguridad
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        // Clave secreta para firmar el token que se codifica en UTF8 por seguridad
+        // Se usa la variable segura 'jwtSecretKey'
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+        ValidateLifetime = true // Agregado para validar la expiración del token
     };
 });
-
-builder.Services.AddSingleton<IpasswordHelper, PasswordHelper>(); //Inyección de dependencia para el servicio de manejo de contraseñas, no tiene estado por eso es singleton
-builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddAuthorization(); //Habilitador final para proteger endpoints con autorizacion
 
