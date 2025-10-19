@@ -14,6 +14,8 @@ namespace SupermercadoAPI.Models
         public decimal precio { get; set; }
         [ForeignKey("idCategoria")]
         public int idCategoria { get; set; }
+
+        [ForeignKey("idCategoria")]
         public Categorias? categoria { get; set; }
         public Inventarios? Inventario { get; set; }
         public Productos() { }

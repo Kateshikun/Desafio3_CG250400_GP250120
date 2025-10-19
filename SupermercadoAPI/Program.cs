@@ -1,9 +1,10 @@
-using SupermercadoAPI.Data;
-using Microsoft.EntityFrameworkCore;
-using SupermercadoAPI.Mappings;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using SupermercadoAPI.Data;
+using SupermercadoAPI.Mappings;
 using SupermercadoAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,7 +30,36 @@ builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly); //Registrar los
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c => //Esto es para prubeas con el token
+{
+c.SwaggerDoc("v1", new OpenApiInfo { Title = "SupermercadoAPI", Version = "v1" });
+
+// 1. Definición de la autenticación Bearer
+c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+{
+    Name = "Authorization",
+    Type = SecuritySchemeType.ApiKey,
+    Scheme = "Bearer",
+    BearerFormat = "JWT",
+    In = ParameterLocation.Header,
+    Description = "Ingresa 'Bearer ' [espacio] y luego tu token JWT. Ejemplo: 'Bearer 12345abcdef'",
+});
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 /* SERVICIOS DE SEGURIDAD */
 // Inyección de dependencia para el servicio de manejo de contraseñas, no tiene estado por eso es singleton
@@ -70,6 +100,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
 }
 
 app.UseAuthentication();

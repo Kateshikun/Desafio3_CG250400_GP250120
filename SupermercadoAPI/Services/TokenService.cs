@@ -22,15 +22,15 @@ namespace SupermercadoAPI.Services
                 new Claim(ClaimTypes.Role, usuario.rol)
             };
 
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["JWT:Secret"])); //Clave secreta para firmar el token
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["JwtSettings:Secret"])); //Clave secreta para firmar el token
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); //Credenciales de firma utilizando el algoritmo HmacSha256
 
             var expiryMinutes = _configuration.GetValue<int>("JwtSettings:ExpiryMinutes"); //Tiempo de expiración del token en minutos (lo saca del appsettings.json)
             var expirationTime = DateTime.UtcNow.AddMinutes(expiryMinutes); //Calcula la hora de expiración sumando los minutos actuales a la hora actual en UTC
 
             var token = new JwtSecurityToken( //!!Con todos los datos, ahora construye el token JWT!!
-                issuer: _configuration["JWT:Issuer"],
-                audience: _configuration["JWT:Audience"],
+                issuer: _configuration["JwtSettings:Issuer"],
+                audience: _configuration["JwtSettings:Audience"],
                 claims: claims,
                 expires: expirationTime,
                 signingCredentials: creds

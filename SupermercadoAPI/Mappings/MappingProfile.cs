@@ -8,18 +8,28 @@ namespace SupermercadoAPI.Mappings
     {
         public MappingProfile()
         {
-            CreateMap<ProductoCreacionDto, Productos>();
-            CreateMap<Productos, ProductoDto>();
-            CreateMap<ProductoActualizacionDto, Productos>();
-            CreateMap<CategoriaDto, Categorias>();
-            CreateMap<Inventarios, InventarioDto>();
-            CreateMap<Productos, InventarioDto>()
-                .ForMember(
-                dest => dest.CantidadActual,
-                opt => opt.MapFrom(src => src.Inventario.CantidadActual));
-            CreateMap<InventarioDto, Inventarios>();
+            CreateMap<ProductoCreacionDto, Productos>();          // POST: DTO -> Modelo
+            CreateMap<Productos, ProductoDto>();                  // GET, POST: Modelo -> Response DTO (
+            CreateMap<ProductoActualizacionDto, Productos>();     // PUT: DTO -> Modelo (Para actualizar)
+
+            // --- Mapeos para AUTENTICACIÓN ---
             CreateMap<Usuarios, AuthResponseDto>();
             CreateMap<RegistroUsuarioDto, Usuarios>();
+
+            // --- Mapeos para INVENTARIO ---
+            CreateMap<Inventarios, InventarioDto>();              
+            CreateMap<InventarioDto, Inventarios>();              
+
+            CreateMap<CrearInventarioDto, Inventarios>();         
+            CreateMap<InventarioActualizacionDto, Inventarios>(); 
+            CreateMap<Productos, InventarioDto>()
+                .ForMember( // Para combinar propiedades de dos entidades en un solo DTO
+                dest => dest.CantidadActual,
+                opt => opt.MapFrom(src => src.Inventario.CantidadActual));
+
+            // Mapeo para Categoría 
+            CreateMap<CategoriaDto, Categorias>();
+            CreateMap<Categorias, CategoriaDto>();
         }
     }
 }
